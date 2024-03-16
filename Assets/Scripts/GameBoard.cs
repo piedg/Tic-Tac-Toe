@@ -121,20 +121,21 @@ public class GameBoard : MonoBehaviour
 
         if (Sign == GameManager.Instance.AI)
         {
-            if (result == GameManager.Instance.Player)
+            if (result == GameManager.Instance.AI)
             {
-                return depth - 10; 
+                return 10 - depth; 
             }
-            else if (result == GameManager.Instance.AI)
+            else if (result == GameManager.Instance.Player)
             {
-                return 10 - depth; // Punteggio maggiore nel minor tempo possibile
+                return depth - 10;
             }
+
             else if (IsBoardFull())
             {
                 return 0;
             }
         }
-        else if(Sign == GameManager.Instance.Player)
+        else if (Sign == GameManager.Instance.Player)
         {
             if (result == GameManager.Instance.AI)
             {
@@ -142,7 +143,7 @@ public class GameBoard : MonoBehaviour
             }
             else if (result == GameManager.Instance.Player)
             {
-                return 10 - depth; // Punteggio maggiore nel minor tempo possibile
+                return 10 - depth; 
             }
             else if (IsBoardFull())
             {
