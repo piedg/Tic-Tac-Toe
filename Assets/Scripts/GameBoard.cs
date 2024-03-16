@@ -72,13 +72,23 @@ public class GameBoard : MonoBehaviour
             }
         }
 
-        if (GameManager.Instance.IsAITurn && !IsBoardFull())
+        if (!IsBoardFull())
         {
-            AIMove();
+            if (GameManager.Instance.IsAITurn)
+            {
+                AIMove(GameManager.Instance.AI);
+                GameManager.Instance.IsAITurn = false;
+            }
+            else
+            {
+                AIMove(GameManager.Instance.Player);
+                GameManager.Instance.IsAITurn = true;
+            }
         }
+
     }
 
-    void AIMove()
+    void AIMove(eSign Sign)
     {
         int bestScore = int.MinValue;
         var move = (x: 0, y: 0);
@@ -89,8 +99,8 @@ public class GameBoard : MonoBehaviour
             {
                 if (board[i, j].IsAvailable)
                 {
-                    board[i, j].SetSign(GameManager.Instance.AI);
-                    int score = MiniMax(board, 0, int.MinValue, int.MaxValue, false);
+                    board[i, j].SetSign(Sign);
+                    int score = MiniMax(Sign, board, 0, int.MinValue, int.MaxValue, false);
                     board[i, j].Unsign();
                     if (score > bestScore)
                     {
@@ -101,27 +111,45 @@ public class GameBoard : MonoBehaviour
             }
         }
         Debug.Log("Best score: " + bestScore);
-        board[move.x, move.y].SetSign(GameManager.Instance.AI);
-        GameManager.Instance.IsAITurn = false;
+        board[move.x, move.y].SetSign(Sign);
     }
 
 
-    int MiniMax(BoardCell[,] board, int depth, int alpha, int beta, bool isMax)
+    int MiniMax(eSign Sign, BoardCell[,] board, int depth, int alpha, int beta, bool isMax)
     {
         eSign result = WinnerSign();
 
-        if (result == GameManager.Instance.Player)
+        if (Sign == GameManager.Instance.AI)
         {
-            return depth - 10; // Punteggio maggiore nel minor tempo possibile
+            if (result == GameManager.Instance.Player)
+            {
+                return depth - 10; 
+            }
+            else if (result == GameManager.Instance.AI)
+            {
+                return 10 - depth; // Punteggio maggiore nel minor tempo possibile
+            }
+            else if (IsBoardFull())
+            {
+                return 0;
+            }
         }
-        else if (result == GameManager.Instance.AI)
+        else if(Sign == GameManager.Instance.Player)
         {
-            return 10 - depth;
+            if (result == GameManager.Instance.AI)
+            {
+                return depth - 10;
+            }
+            else if (result == GameManager.Instance.Player)
+            {
+                return 10 - depth; // Punteggio maggiore nel minor tempo possibile
+            }
+            else if (IsBoardFull())
+            {
+                return 0;
+            }
         }
-        else if (IsBoardFull())
-        {
-            return 0;
-        }
+
 
         if (isMax)
         {
@@ -132,8 +160,8 @@ public class GameBoard : MonoBehaviour
                 {
                     if (board[i, j].IsAvailable)
                     {
-                        board[i, j].SetSign(GameManager.Instance.AI);
-                        int score = MiniMax(board, depth + 1, alpha, beta, false);
+                        board[i, j].SetSign(Sign);
+                        int score = MiniMax(Sign, board, depth + 1, alpha, beta, false);
                         board[i, j].Unsign();
                         bestScore = Mathf.Max(score, bestScore);
 
@@ -156,8 +184,17 @@ public class GameBoard : MonoBehaviour
                 {
                     if (board[i, j].IsAvailable)
                     {
-                        board[i, j].SetSign(GameManager.Instance.Player);
-                        int score = MiniMax(board, depth + 1, alpha, beta, true);
+
+                        if (Sign == GameManager.Instance.AI)
+                        {
+                            board[i, j].SetSign(GameManager.Instance.Player);
+                        }
+                        else if (Sign == GameManager.Instance.Player)
+                        {
+                            board[i, j].SetSign(GameManager.Instance.AI);
+                        }
+
+                        int score = MiniMax(Sign, board, depth + 1, alpha, beta, true);
                         board[i, j].Unsign();
                         bestScore = Mathf.Min(score, bestScore);
 
