@@ -112,11 +112,11 @@ public class GameBoard : MonoBehaviour
 
         if (result == GameManager.Instance.Player)
         {
-            return depth - 10; // Punteggio maggiore nel minor tempo possibile
+            return depth - 10; // Punteggio minone nel maggior tempo possibile
         }
         else if (result == GameManager.Instance.AI)
         {
-            return 10 - depth;
+            return 10 - depth; // Punteggio maggiore nel minor tempo possibile
         }
         else if (IsBoardFull())
         {
@@ -126,23 +126,18 @@ public class GameBoard : MonoBehaviour
         if (isMax)
         {
             int bestScore = int.MinValue;
-            for (int i = 0; i < 3; i++)
-            {
-                for (int j = 0; j < 3; j++)
-                {
-                    if (board[i, j].IsAvailable)
-                    {
-                        board[i, j].SetSign(GameManager.Instance.AI);
-                        int score = MiniMax(board, depth + 1, alpha, beta, false);
-                        board[i, j].Unsign();
-                        bestScore = Mathf.Max(score, bestScore);
 
-                        alpha = Mathf.Max(alpha, score);
-                        if (beta <= alpha)
-                        {
-                            break;
-                        }
-                    }
+            foreach (BoardCell cell in board)
+            {
+                if (cell.IsAvailable)
+                {
+                    cell.SetSign(GameManager.Instance.AI);
+                    int score = MiniMax(board, depth + 1, alpha, beta, false);
+                    cell.Unsign();
+                    bestScore = Mathf.Max(score, bestScore);
+
+                    alpha = Mathf.Max(alpha, score);
+                    if (beta <= alpha) break;
                 }
             }
             return bestScore;
@@ -150,23 +145,17 @@ public class GameBoard : MonoBehaviour
         else
         {
             int bestScore = int.MaxValue;
-            for (int i = 0; i < 3; i++)
+            foreach (BoardCell cell in board)
             {
-                for (int j = 0; j < 3; j++)
+                if (cell.IsAvailable)
                 {
-                    if (board[i, j].IsAvailable)
-                    {
-                        board[i, j].SetSign(GameManager.Instance.Player);
-                        int score = MiniMax(board, depth + 1, alpha, beta, true);
-                        board[i, j].Unsign();
-                        bestScore = Mathf.Min(score, bestScore);
+                    cell.SetSign(GameManager.Instance.Player);
+                    int score = MiniMax(board, depth + 1, alpha, beta, true);
+                    cell.Unsign();
+                    bestScore = Mathf.Min(score, bestScore);
 
-                        beta = Mathf.Min(beta, score);
-                        if (beta <= alpha)
-                        {
-                            break;
-                        }
-                    }
+                    beta = Mathf.Min(beta, score);
+                    if (beta <= alpha) break;
                 }
             }
             return bestScore;
