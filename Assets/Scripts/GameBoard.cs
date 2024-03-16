@@ -110,13 +110,13 @@ public class GameBoard : MonoBehaviour
     {
         eSign result = WinnerSign();
 
-        if (result == GameManager.Instance.Player)
-        {
-            return depth - 10; // Punteggio minone nel maggior tempo possibile
-        }
-        else if (result == GameManager.Instance.AI)
+        if (result == GameManager.Instance.AI)
         {
             return 10 - depth; // Punteggio maggiore nel minor tempo possibile
+        }
+        else if (result == GameManager.Instance.Player)
+        {
+            return depth - 10; // Punteggio minone nel maggior tempo possibile
         }
         else if (IsBoardFull())
         {
