@@ -71,7 +71,7 @@ public class GameBoard : MonoBehaviour
             }
         }
 
-        if (GameManager.Instance.IsAITurn)
+        if (GameManager.Instance.IsAITurn && !IsBoardFull())
         {
             BestMove();
         }
