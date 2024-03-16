@@ -1,4 +1,5 @@
 using UnityEngine;
+using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 
 public class GameBoard : MonoBehaviour
@@ -73,14 +74,15 @@ public class GameBoard : MonoBehaviour
 
         if (GameManager.Instance.IsAITurn && !IsBoardFull())
         {
-            BestMove();
+            AIMove();
         }
     }
 
-    void BestMove()
+    void AIMove()
     {
         int bestScore = int.MinValue;
         var move = (x: 0, y: 0);
+
         for (int i = 0; i < 3; i++)
         {
             for (int j = 0; j < 3; j++)
@@ -88,7 +90,7 @@ public class GameBoard : MonoBehaviour
                 if (board[i, j].IsAvailable)
                 {
                     board[i, j].SetSign(GameManager.Instance.AI);
-                    int score = MiniMax(board, 0, false);
+                    int score = MiniMax(board, 0, int.MinValue, int.MaxValue, false);
                     board[i, j].Unsign();
                     if (score > bestScore)
                     {
@@ -98,22 +100,23 @@ public class GameBoard : MonoBehaviour
                 }
             }
         }
+        Debug.Log("Best score: " + bestScore);
         board[move.x, move.y].SetSign(GameManager.Instance.AI);
         GameManager.Instance.IsAITurn = false;
     }
 
 
-    int MiniMax(BoardCell[,] board, int depth, bool isMax)
+    int MiniMax(BoardCell[,] board, int depth, int alpha, int beta, bool isMax)
     {
         eSign result = WinnerSign();
 
         if (result == GameManager.Instance.Player)
         {
-            return -10;
+            return depth - 10; // Punteggio maggiore nel minor tempo possibile
         }
         else if (result == GameManager.Instance.AI)
         {
-            return 10;
+            return 10 - depth;
         }
         else if (IsBoardFull())
         {
@@ -130,9 +133,15 @@ public class GameBoard : MonoBehaviour
                     if (board[i, j].IsAvailable)
                     {
                         board[i, j].SetSign(GameManager.Instance.AI);
-                        int score = MiniMax(board, depth + 1, false);
+                        int score = MiniMax(board, depth + 1, alpha, beta, false);
                         board[i, j].Unsign();
                         bestScore = Mathf.Max(score, bestScore);
+
+                        alpha = Mathf.Max(alpha, score);
+                        if (beta <= alpha)
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -148,9 +157,15 @@ public class GameBoard : MonoBehaviour
                     if (board[i, j].IsAvailable)
                     {
                         board[i, j].SetSign(GameManager.Instance.Player);
-                        int score = MiniMax(board, depth + 1, true);
+                        int score = MiniMax(board, depth + 1, alpha, beta, true);
                         board[i, j].Unsign();
                         bestScore = Mathf.Min(score, bestScore);
+
+                        beta = Mathf.Min(beta, score);
+                        if (beta <= alpha)
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -160,46 +175,43 @@ public class GameBoard : MonoBehaviour
 
     eSign WinnerSign()
     {
-        eSign winnerSign = eSign.Empty;
-
-        // Controlla le righe
         for (int i = 0; i < 3; i++)
         {
-            if (board[i, 0].CurrentSign == board[i, 1].CurrentSign &&
-                board[i, 1].CurrentSign == board[i, 2].CurrentSign &&
-                board[i, 0].CurrentSign != eSign.Empty)
+            if (board[i, 0].CurrentSign != eSign.Empty &&
+                board[i, 0].CurrentSign == board[i, 1].CurrentSign &&
+                board[i, 1].CurrentSign == board[i, 2].CurrentSign)
             {
-                winnerSign = board[i, 0].CurrentSign;
+                return board[i, 0].CurrentSign;
             }
         }
 
         // Controlla le colonne
         for (int i = 0; i < 3; i++)
         {
-            if (board[0, i].CurrentSign == board[1, i].CurrentSign &&
-                board[1, i].CurrentSign == board[2, i].CurrentSign &&
-                board[0, i].CurrentSign != eSign.Empty)
+            if (board[0, i].CurrentSign != eSign.Empty &&
+                board[0, i].CurrentSign == board[1, i].CurrentSign &&
+                board[1, i].CurrentSign == board[2, i].CurrentSign)
             {
-                winnerSign = board[0, i].CurrentSign;
+                return board[0, i].CurrentSign;
             }
         }
 
         // Controlla le diagonali
-        if (board[0, 0].CurrentSign == board[1, 1].CurrentSign &&
-            board[1, 1].CurrentSign == board[2, 2].CurrentSign &&
-            board[0, 0].CurrentSign != eSign.Empty)
+        if (board[0, 0].CurrentSign != eSign.Empty &&
+            board[0, 0].CurrentSign == board[1, 1].CurrentSign &&
+            board[1, 1].CurrentSign == board[2, 2].CurrentSign)
         {
-            winnerSign = board[0, 0].CurrentSign;
+            return board[0, 0].CurrentSign;
         }
 
-        if (board[0, 2].CurrentSign == board[1, 1].CurrentSign &&
-            board[1, 1].CurrentSign == board[2, 0].CurrentSign &&
-            board[0, 2].CurrentSign != eSign.Empty)
+        if (board[0, 2].CurrentSign != eSign.Empty &&
+            board[0, 2].CurrentSign == board[1, 1].CurrentSign &&
+            board[1, 1].CurrentSign == board[2, 0].CurrentSign)
         {
-            winnerSign = board[0, 2].CurrentSign;
+            return board[0, 2].CurrentSign;
         }
 
-        return winnerSign;
+        return eSign.Empty;
     }
 
     bool IsBoardFull()
