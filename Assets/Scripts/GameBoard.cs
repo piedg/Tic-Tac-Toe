@@ -1,6 +1,4 @@
 using UnityEngine;
-using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
-
 
 public class GameBoard : MonoBehaviour
 {
@@ -37,18 +35,21 @@ public class GameBoard : MonoBehaviour
         if (WinnerSign() == GameManager.Instance.Player)
         {
             Debug.Log("Player Won");
+            GameManager.Instance.WinText.text = GameManager.Instance.Player + " Won!";
             GameManager.Instance.GameOver = true;
             return;
         }
         else if (WinnerSign() == GameManager.Instance.AI)
         {
             Debug.Log("AI Won");
+            GameManager.Instance.WinText.text = GameManager.Instance.AI + " Won!";
             GameManager.Instance.GameOver = true;
             return;
         }
         else if (IsBoardFull())
         {
             Debug.Log("Tie");
+            GameManager.Instance.WinText.text = "Tie!";
             GameManager.Instance.GameOver = true;
             return;
         }
@@ -75,6 +76,7 @@ public class GameBoard : MonoBehaviour
         if (GameManager.Instance.IsAITurn && !IsBoardFull())
         {
             AIMove();
+            GameManager.Instance.IsAITurn = false;
         }
     }
 
@@ -90,7 +92,7 @@ public class GameBoard : MonoBehaviour
                 if (board[i, j].IsAvailable)
                 {
                     board[i, j].SetSign(GameManager.Instance.AI);
-                    int score = MiniMax(board, 0, 5, int.MinValue, int.MaxValue, false);
+                    int score = MiniMax(board, 0, 1, int.MinValue, int.MaxValue, false);
                     board[i, j].Unsign();
                     if (score > bestScore)
                     {
@@ -103,7 +105,6 @@ public class GameBoard : MonoBehaviour
 
         Debug.Log("Best score: " + bestScore);
         board[move.x, move.y].SetSign(GameManager.Instance.AI);
-        GameManager.Instance.IsAITurn = false;
     }
 
 

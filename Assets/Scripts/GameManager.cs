@@ -1,9 +1,12 @@
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    public Text WinText;
+
     public bool IsAITurn = true;
 
     public eSign Player;
@@ -12,6 +15,7 @@ public class GameManager : MonoBehaviour
     public bool GameOver = false;
 
     public static GameManager Instance;
+
     private void Awake()
     {
         Instance = this;
@@ -21,7 +25,12 @@ public class GameManager : MonoBehaviour
     {
         if(Input.GetKeyDown(KeyCode.R))
         {
-            SceneManager.LoadScene(0);
+            RestartGame();
         }
+    }
+
+    public void RestartGame()
+    {
+        SceneManager.LoadScene(0);
     }
 }
