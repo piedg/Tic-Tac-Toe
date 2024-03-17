@@ -90,7 +90,7 @@ public class GameBoard : MonoBehaviour
                 if (board[i, j].IsAvailable)
                 {
                     board[i, j].SetSign(GameManager.Instance.AI);
-                    int score = MiniMax(board, 0, int.MinValue, int.MaxValue, false);
+                    int score = MiniMax(board, 0, 5, int.MinValue, int.MaxValue, false);
                     board[i, j].Unsign();
                     if (score > bestScore)
                     {
@@ -100,13 +100,14 @@ public class GameBoard : MonoBehaviour
                 }
             }
         }
+
         Debug.Log("Best score: " + bestScore);
         board[move.x, move.y].SetSign(GameManager.Instance.AI);
         GameManager.Instance.IsAITurn = false;
     }
 
 
-    int MiniMax(BoardCell[,] board, int depth, int alpha, int beta, bool isMax)
+    int MiniMax(BoardCell[,] board, int depth, int maxDepth, int alpha, int beta, bool isMax)
     {
         eSign result = WinnerSign();
 
@@ -118,7 +119,7 @@ public class GameBoard : MonoBehaviour
         {
             return depth - 10; // Punteggio minone nel maggior tempo possibile
         }
-        else if (IsBoardFull())
+        else if (IsBoardFull() || depth >= maxDepth)
         {
             return 0;
         }
@@ -132,7 +133,7 @@ public class GameBoard : MonoBehaviour
                 if (cell.IsAvailable)
                 {
                     cell.SetSign(GameManager.Instance.AI);
-                    int score = MiniMax(board, depth + 1, alpha, beta, false);
+                    int score = MiniMax(board, depth + 1, maxDepth, alpha, beta, false);
                     cell.Unsign();
                     bestScore = Mathf.Max(score, bestScore);
 
@@ -150,7 +151,7 @@ public class GameBoard : MonoBehaviour
                 if (cell.IsAvailable)
                 {
                     cell.SetSign(GameManager.Instance.Player);
-                    int score = MiniMax(board, depth + 1, alpha, beta, true);
+                    int score = MiniMax(board, depth + 1, maxDepth, alpha, beta, true);
                     cell.Unsign();
                     bestScore = Mathf.Min(score, bestScore);
 
