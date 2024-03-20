@@ -17,20 +17,6 @@ public class BoardCell : MonoBehaviour
     public Sprite Cross;
     public Sprite Circle;
 
- /*   private void OnMouseDown()
-    {
-        if (GameManager.Instance.GameOver) return;
-
-        if (!GameManager.Instance.IsAITurn)
-        {
-            if (IsAvailable)
-            {
-                SetSign(GameManager.Instance.Player);
-                GameManager.Instance.IsAITurn = true;
-            }
-        }
-    }*/
-
     public void SetSign(eSign Sign)
     {
         switch (Sign)

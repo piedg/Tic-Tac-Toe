@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GameBoard : MonoBehaviour
@@ -30,6 +31,8 @@ public class GameBoard : MonoBehaviour
 
     private void Update()
     {
+        Debug.Log("AI Turn " + GameManager.Instance.IsAITurn);
+
         if (GameManager.Instance.GameOver) return;
 
         if (WinnerSign() == GameManager.Instance.Player)
@@ -82,33 +85,29 @@ public class GameBoard : MonoBehaviour
 
     void AIMove()
     {
-        int bestScore = int.MinValue;
-        var move = (x: 0, y: 0);
+        int bestScore = int.MaxValue;
+        var move = (x: -1, y: -1);
 
-        for (int i = 0; i < 3; i++)
+        foreach (var possibleMove in GetNextStates(board, GameManager.Instance.AI))
         {
-            for (int j = 0; j < 3; j++)
+            int score = MiniMax(possibleMove.Item1, 0, true);
+            if (score <= bestScore)
             {
-                if (board[i, j].IsAvailable)
-                {
-                    board[i, j].SetSign(GameManager.Instance.AI);
-                    int score = MiniMax(board, 0, 1, int.MinValue, int.MaxValue, false);
-                    board[i, j].Unsign();
-                    if (score > bestScore)
-                    {
-                        bestScore = score;
-                        move = (x: i, y: j);
-                    }
-                }
+                bestScore = score;
+                move = (x: possibleMove.Item2, y: possibleMove.Item3);
             }
         }
 
+        if (move.x != -1 && move.y != -1)
+        {
+            board[move.x, move.y].SetSign(GameManager.Instance.AI);
+        }
+
         Debug.Log("Best score: " + bestScore);
-        board[move.x, move.y].SetSign(GameManager.Instance.AI);
     }
 
 
-    int MiniMax(BoardCell[,] board, int depth, int maxDepth, int alpha, int beta, bool isMax)
+    int MiniMax(BoardCell[,] board, int depth, bool isMax)
     {
         eSign result = WinnerSign();
 
@@ -118,51 +117,46 @@ public class GameBoard : MonoBehaviour
         }
         else if (result == GameManager.Instance.Player)
         {
-            return depth - 10; // Punteggio minone nel maggior tempo possibile
+            return depth - 10; // Punteggio minore nel maggior tempo possibile
         }
-        else if (IsBoardFull() || depth >= maxDepth)
+        else if (IsBoardFull())
         {
             return 0;
         }
 
-        if (isMax)
+        int bestScore = isMax ? int.MinValue : int.MaxValue;
+        eSign sign = isMax ? GameManager.Instance.AI : GameManager.Instance.Player;
+
+        foreach (var possibleState in GetNextStates(board, sign))
         {
-            int bestScore = int.MinValue;
-
-            foreach (BoardCell cell in board)
-            {
-                if (cell.IsAvailable)
-                {
-                    cell.SetSign(GameManager.Instance.AI);
-                    int score = MiniMax(board, depth + 1, maxDepth, alpha, beta, false);
-                    cell.Unsign();
-                    bestScore = Mathf.Max(score, bestScore);
-
-                    alpha = Mathf.Max(alpha, score);
-                    if (beta <= alpha) break;
-                }
-            }
-            return bestScore;
+            bestScore = isMax ?
+                Mathf.Max(bestScore, MiniMax(possibleState.Item1, depth + 1, false))
+                : Mathf.Min(bestScore, MiniMax(possibleState.Item1, depth + 1, true));
         }
-        else
-        {
-            int bestScore = int.MaxValue;
-            foreach (BoardCell cell in board)
-            {
-                if (cell.IsAvailable)
-                {
-                    cell.SetSign(GameManager.Instance.Player);
-                    int score = MiniMax(board, depth + 1, maxDepth, alpha, beta, true);
-                    cell.Unsign();
-                    bestScore = Mathf.Min(score, bestScore);
 
-                    beta = Mathf.Min(beta, score);
-                    if (beta <= alpha) break;
-                }
-            }
-            return bestScore;
-        }
+        return bestScore;
     }
+
+    private List<(BoardCell[,], int, int)> GetNextStates(BoardCell[,] previousBoard, eSign sign)
+    {
+        var result = new List<(BoardCell[,], int, int)>();
+
+        for (var x = 0; x < 3; x++)
+        {
+            for (var y = 0; y < 3; y++)
+            {
+                if (!previousBoard[x, y].IsAvailable) continue;
+
+                BoardCell[,] possibleState = new BoardCell[3,3];
+                System.Array.Copy(previousBoard, possibleState, previousBoard.Length);
+                possibleState[x, y].SetSign(sign);
+                result.Add(new(possibleState, x, y));
+            }
+        }
+
+        return result;
+    }
+
 
     eSign WinnerSign()
     {
