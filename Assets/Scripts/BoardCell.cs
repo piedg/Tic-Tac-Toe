@@ -14,7 +14,10 @@ public class BoardCell
     {
         Unsign();
     }
-
+    public BoardCell(eSign sign)
+    {
+        SetSign(sign);
+    }
     public void SetSign(eSign sign)
     {
         CurrentSign = sign;

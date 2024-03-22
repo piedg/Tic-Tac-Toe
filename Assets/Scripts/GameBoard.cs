@@ -73,6 +73,7 @@ public class GameBoard : MonoBehaviour
                     if (boardCellVis.BoardCell.IsAvailable)
                     {
                         boardCellVis.BoardCell.SetSign(GameManager.Instance.Player);
+
                         GameManager.Instance.IsAITurn = true;
                     }
                 }
@@ -116,11 +117,11 @@ public class GameBoard : MonoBehaviour
 
         if (result == GameManager.Instance.AI)
         {
-            return 10 - depth; // Punteggio maggiore nel minor tempo possibile
+            return - 10 + depth; // Punteggio maggiore nel minor tempo possibile
         }
         else if (result == GameManager.Instance.Player)
         {
-            return depth - 10; // Punteggio minore nel maggior tempo possibile
+            return 10 - depth; // Punteggio minore nel maggior tempo possibile
         }
         else if (IsBoardFull())
         {
@@ -140,24 +141,34 @@ public class GameBoard : MonoBehaviour
         return bestScore;
     }
 
-    private List<(BoardCell[,], int, int)> GetNextStates(BoardCell[,] previousBoard, eSign sign)
+private List<(BoardCell[,], int, int)> GetNextStates(BoardCell[,] previousBoard, eSign sign)
+{
+    var result = new List<(BoardCell[,], int, int)>();
+
+    for (var x = 0; x < 3; x++)
     {
-        var result = new List<(BoardCell[,], int, int)>();
-
-        for (var x = 0; x < 3; x++)
+        for (var y = 0; y < 3; y++)
         {
-            for (var y = 0; y < 3; y++)
+            if (!previousBoard[x, y].IsAvailable) continue;
+
+            BoardCell[,] possibleState = new BoardCell[3, 3];
+
+            for (int i = 0; i < 3; i++)
             {
-                if (!previousBoard[x, y].IsAvailable) continue;
-
-                BoardCell[,] possibleState = (BoardCell[,])previousBoard.Clone();
-                possibleState[x, y].SetSign(sign);
-                result.Add(new(possibleState, x, y));
+                for (int j = 0; j < 3; j++)
+                {
+                    possibleState[i, j] = new BoardCell(previousBoard[i, j].CurrentSign); // come se facessimo il clone
+                }
             }
-        }
 
-        return result;
+            possibleState[x, y].SetSign(sign);
+            result.Add((possibleState, x, y));
+        }
     }
+
+    return result;
+}
+
 
 
     eSign WinnerSign()
