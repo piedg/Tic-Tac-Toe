@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class GameBoard : MonoBehaviour
 {
-    [SerializeField] BoardCell BoardCell;
+    [SerializeField] BoardCellVisual BoardCellVisual;
     public BoardCell[,] board = new BoardCell[3, 3];
 
     private void Start()
@@ -20,11 +20,14 @@ public class GameBoard : MonoBehaviour
         {
             for (int x = 0; x < 3; x++)
             {
-                BoardCell boardCell = Instantiate(BoardCell, transform);
-                boardCell.transform.position = new Vector3(x + offsetX, y - offsetY);
-                boardCell.name = "x: " + x + " y: " + y;
+                BoardCell boardCell = new BoardCell();
                 board[x, y] = boardCell;
-                boardCell.Unsign();
+
+                BoardCellVisual boardCellVis = Instantiate(BoardCellVisual, transform);
+                boardCellVis.transform.position = new Vector3(x + offsetX, y - offsetY);
+                boardCellVis.name = "x: " + x + " y: " + y;
+                boardCellVis.ClearCell();
+                boardCellVis.BoardCell = boardCell;
             }
         }
     }
@@ -65,11 +68,11 @@ public class GameBoard : MonoBehaviour
 
             if (hit.collider != null)
             {
-                if (hit.collider.TryGetComponent(out BoardCell boardCell))
+                if (hit.collider.TryGetComponent(out BoardCellVisual boardCellVis))
                 {
-                    if (boardCell.IsAvailable)
+                    if (boardCellVis.BoardCell.IsAvailable)
                     {
-                        boardCell.SetSign(GameManager.Instance.Player);
+                        boardCellVis.BoardCell.SetSign(GameManager.Instance.Player);
                         GameManager.Instance.IsAITurn = true;
                     }
                 }
@@ -147,8 +150,7 @@ public class GameBoard : MonoBehaviour
             {
                 if (!previousBoard[x, y].IsAvailable) continue;
 
-                BoardCell[,] possibleState = new BoardCell[3,3];
-                System.Array.Copy(previousBoard, possibleState, previousBoard.Length);
+                BoardCell[,] possibleState = (BoardCell[,])previousBoard.Clone();
                 possibleState[x, y].SetSign(sign);
                 result.Add(new(possibleState, x, y));
             }

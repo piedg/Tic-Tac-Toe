@@ -448,7 +448,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bbd9277dfafe7834ab3d89aeb2cb1cba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BoardCell: {fileID: 733706289664829162, guid: 68ce0b5b5d6f7f64381ef889061672c4, type: 3}
+  BoardCellVisual: {fileID: 6612872805728758458, guid: 68ce0b5b5d6f7f64381ef889061672c4, type: 3}
 --- !u!4 &309410751
 Transform:
   m_ObjectHideFlags: 0
