@@ -92,8 +92,11 @@ public class GameBoard : MonoBehaviour
         int bestScore = int.MaxValue;
         var move = (x: -1, y: -1);
 
+
+        Debug.Log("GetNextStates 1 Count " + GetNextStates(board, GameManager.Instance.AI).Count);
         foreach (var possibleMove in GetNextStates(board, GameManager.Instance.AI))
         {
+            Debug.Log("possibleMove Array " + possibleMove.Item1.Length);
             int score = MiniMax(possibleMove.Item1, 0, true);
             if (score <= bestScore)
             {
@@ -117,7 +120,7 @@ public class GameBoard : MonoBehaviour
 
         if (result == GameManager.Instance.AI)
         {
-            return - 10 + depth; // Punteggio maggiore nel minor tempo possibile
+            return -10 + depth; // Punteggio maggiore nel minor tempo possibile
         }
         else if (result == GameManager.Instance.Player)
         {
@@ -131,8 +134,10 @@ public class GameBoard : MonoBehaviour
         int bestScore = isMax ? int.MinValue : int.MaxValue;
         eSign sign = isMax ? GameManager.Instance.AI : GameManager.Instance.Player;
 
+        Debug.Log("GetNextStates 2 " + GetNextStates(board, sign).Count);
         foreach (var possibleState in GetNextStates(board, sign))
         {
+            Debug.Log("Sono qui");
             bestScore = isMax ?
                 Mathf.Max(bestScore, MiniMax(possibleState.Item1, depth + 1, false))
                 : Mathf.Min(bestScore, MiniMax(possibleState.Item1, depth + 1, true));
@@ -141,33 +146,32 @@ public class GameBoard : MonoBehaviour
         return bestScore;
     }
 
-private List<(BoardCell[,], int, int)> GetNextStates(BoardCell[,] previousBoard, eSign sign)
-{
-    var result = new List<(BoardCell[,], int, int)>();
-
-    for (var x = 0; x < 3; x++)
+    private List<(BoardCell[,], int, int)> GetNextStates(BoardCell[,] previousBoard, eSign sign)
     {
-        for (var y = 0; y < 3; y++)
+        var result = new List<(BoardCell[,], int, int)>();
+
+        for (var x = 0; x < 3; x++)
         {
-            if (!previousBoard[x, y].IsAvailable) continue;
-
-            BoardCell[,] possibleState = new BoardCell[3, 3];
-
-            for (int i = 0; i < 3; i++)
+            for (var y = 0; y < 3; y++)
             {
-                for (int j = 0; j < 3; j++)
+                if (!previousBoard[x, y].IsAvailable) continue;
+
+                BoardCell[,] possibleState = new BoardCell[3, 3];
+
+                for (int i = 0; i < 3; i++)
                 {
-                    possibleState[i, j] = new BoardCell(previousBoard[i, j].CurrentSign); // come se facessimo il clone
+                    for (int j = 0; j < 3; j++)
+                    {
+                        possibleState[i, j] = new BoardCell(previousBoard[i, j].CurrentSign); // come se facessimo il clone
+                    }
                 }
+
+                possibleState[x, y].SetSign(sign);
+                result.Add((possibleState, x, y));
             }
-
-            possibleState[x, y].SetSign(sign);
-            result.Add((possibleState, x, y));
         }
+        return result;
     }
-
-    return result;
-}
 
 
 

@@ -24,6 +24,8 @@ public class BoardCellVisual : MonoBehaviour
                 Image.sprite = null;
                 break;
         }
+
+        Debug.Log(gameObject.name + " isAvailable: " + BoardCell.IsAvailable);
     }
 
     public void SetSprite(eSign sign)
