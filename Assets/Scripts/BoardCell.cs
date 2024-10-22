@@ -4,8 +4,8 @@ using UnityEngine;
 
 public enum eSign
 {
-    X, 
-    O, 
+    X,
+    O,
     Empty
 }
 
@@ -16,20 +16,6 @@ public class BoardCell : MonoBehaviour
     public eSign CurrentSign;
     public Sprite Cross;
     public Sprite Circle;
-
- /*   private void OnMouseDown()
-    {
-        if (GameManager.Instance.GameOver) return;
-
-        if (!GameManager.Instance.IsAITurn)
-        {
-            if (IsAvailable)
-            {
-                SetSign(GameManager.Instance.Player);
-                GameManager.Instance.IsAITurn = true;
-            }
-        }
-    }*/
 
     public void SetSign(eSign Sign)
     {
@@ -43,11 +29,8 @@ public class BoardCell : MonoBehaviour
                 Image.sprite = Circle;
                 CurrentSign = eSign.O;
                 break;
-            case eSign.Empty:
-                Image.sprite = null;
-                CurrentSign = eSign.Empty;
-                break;
             default:
+            case eSign.Empty:
                 Image.sprite = null;
                 CurrentSign = eSign.Empty;
                 break;
@@ -58,7 +41,7 @@ public class BoardCell : MonoBehaviour
     public void Unsign()
     {
         Image.sprite = null;
-        CurrentSign = eSign.Empty; 
+        CurrentSign = eSign.Empty;
         IsAvailable = true;
     }
 }

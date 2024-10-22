@@ -1,16 +1,38 @@
+using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class GameBoard : MonoBehaviour
 {
     [SerializeField] BoardCell BoardCell;
     public BoardCell[,] board = new BoardCell[3, 3];
 
+    int aiMaxDepth = 1; // >4 is invincible
+
+    public event Action<eSign> OnSignDrawn;
+    public event Action OnGameOver;
+    public event Action<int> OnAIMove;
+
+    float delayAIMoveTime = 0.75f;
+    float delayAIMoveTimer;
+
     private void Start()
     {
+        GameManager.Instance.OnMaxDepthChanged += UpdateAIMaxDepth;
+
         CreateBoard();
+
+        aiMaxDepth = GameManager.Instance.AiMaxDepth;
+
+        delayAIMoveTimer = delayAIMoveTime;
     }
 
-    void CreateBoard()
+    private void UpdateAIMaxDepth(int newAIMaxDepth)
+    {
+        aiMaxDepth = newAIMaxDepth;
+    }
+
+    private void CreateBoard()
     {
         float offsetX = -1f;
         float offsetY = 1f;
@@ -28,55 +50,90 @@ public class GameBoard : MonoBehaviour
         }
     }
 
+    public void ResetBoard()
+    {
+        for (int y = 0; y < 3; y++)
+        {
+            for (int x = 0; x < 3; x++)
+            {
+                board[x, y].Unsign();
+            }
+        }
+    }
+
+
+
     private void Update()
     {
-        if (GameManager.Instance.GameOver) return;
-
         if (WinnerSign() == GameManager.Instance.Player)
         {
             Debug.Log("Player Won");
-            GameManager.Instance.WinText.text = GameManager.Instance.Player + " Won!";
-            GameManager.Instance.GameOver = true;
+            GameManager.Instance.Winner = GameManager.Instance.Player;
+            OnGameOver?.Invoke();
+
             return;
         }
         else if (WinnerSign() == GameManager.Instance.AI)
         {
             Debug.Log("AI Won");
-            GameManager.Instance.WinText.text = GameManager.Instance.AI + " Won!";
-            GameManager.Instance.GameOver = true;
+            GameManager.Instance.Winner = GameManager.Instance.AI;
+            OnGameOver?.Invoke();
+
             return;
         }
         else if (IsBoardFull())
         {
             Debug.Log("Tie");
-            GameManager.Instance.WinText.text = "Tie!";
-            GameManager.Instance.GameOver = true;
+            GameManager.Instance.Winner = eSign.Empty;
+            OnGameOver?.Invoke();
+
             return;
-        }
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Ray2D ray = new Ray2D(mousePosition, Vector2.zero);
-            RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
-
-            if (hit.collider != null)
-            {
-                if (hit.collider.TryGetComponent(out BoardCell boardCell))
-                {
-                    if (boardCell.IsAvailable)
-                    {
-                        boardCell.SetSign(GameManager.Instance.Player);
-                        GameManager.Instance.IsAITurn = true;
-                    }
-                }
-            }
         }
 
         if (GameManager.Instance.IsAITurn && !IsBoardFull())
         {
-            AIMove();
-            GameManager.Instance.IsAITurn = false;
+            delayAIMoveTimer -= Time.deltaTime;
+            if (delayAIMoveTimer <= 0)
+            {
+                AIMove();
+                GameManager.Instance.SwapTurn();
+            }
+        }
+        else
+        {
+            PlayerInput();
+
+            delayAIMoveTimer = delayAIMoveTime;
+        }
+    }
+
+    Touch touch;
+    private void PlayerInput()
+    {
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (!EventSystem.current.IsPointerOverGameObject() &&
+         !EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+            {
+                Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Ray2D ray = new Ray2D(mousePosition, Vector2.zero);
+                RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
+
+                if (hit.collider != null)
+                {
+                    if (hit.collider.TryGetComponent(out BoardCell boardCell))
+                    {
+                        if (boardCell.IsAvailable)
+                        {
+                            boardCell.SetSign(GameManager.Instance.Player);
+                            OnSignDrawn?.Invoke(GameManager.Instance.Player);
+
+                            GameManager.Instance.SwapTurn();
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -92,21 +149,23 @@ public class GameBoard : MonoBehaviour
                 if (board[i, j].IsAvailable)
                 {
                     board[i, j].SetSign(GameManager.Instance.AI);
-                    int score = MiniMax(board, 0, 1, int.MinValue, int.MaxValue, false);
+                    int score = MiniMax(board, 0, aiMaxDepth, int.MinValue, int.MaxValue, false);
                     board[i, j].Unsign();
+
                     if (score > bestScore)
                     {
                         bestScore = score;
                         move = (x: i, y: j);
+
+                        OnAIMove?.Invoke(bestScore);
                     }
                 }
             }
         }
 
-        Debug.Log("Best score: " + bestScore);
         board[move.x, move.y].SetSign(GameManager.Instance.AI);
+        OnSignDrawn?.Invoke(GameManager.Instance.AI);
     }
-
 
     int MiniMax(BoardCell[,] board, int depth, int maxDepth, int alpha, int beta, bool isMax)
     {
@@ -114,11 +173,11 @@ public class GameBoard : MonoBehaviour
 
         if (result == GameManager.Instance.AI)
         {
-            return 10 - depth; // Punteggio maggiore nel minor tempo possibile
+            return 10 - depth; 
         }
         else if (result == GameManager.Instance.Player)
         {
-            return depth - 10; // Punteggio minone nel maggior tempo possibile
+            return depth - 10; 
         }
         else if (IsBoardFull() || depth >= maxDepth)
         {
@@ -128,7 +187,6 @@ public class GameBoard : MonoBehaviour
         if (isMax)
         {
             int bestScore = int.MinValue;
-
             foreach (BoardCell cell in board)
             {
                 if (cell.IsAvailable)
@@ -164,7 +222,7 @@ public class GameBoard : MonoBehaviour
         }
     }
 
-    eSign WinnerSign()
+    private eSign WinnerSign()
     {
         for (int i = 0; i < 3; i++)
         {
@@ -205,11 +263,15 @@ public class GameBoard : MonoBehaviour
         return eSign.Empty;
     }
 
-    bool IsBoardFull()
+    private bool IsBoardFull()
     {
         foreach (BoardCell cell in board)
+        {
             if (cell.CurrentSign == eSign.Empty)
+            {
                 return false;
+            }
+        }
         return true;
     }
 }
